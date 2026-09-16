@@ -1,14 +1,14 @@
 {
-  "name": "LOGI BARCODE 2.1",
+  "name": "LOGI BARCODE 2.3",
   "short_name": "LOGI BARCODE",
-  "description": "Cadastro de produtos e etiquetas Code 128 para operações logísticas.",
+  "description": "Cadastro de produtos, conferência e etiquetas Code 128 para operações logísticas.",
+  "lang": "pt-BR",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f4f7fb",
   "theme_color": "#0e1a2b",
-  "icons": [
-    {"src":"/icons/logi-barcode.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
-  ]
+  "categories": ["business", "productivity"],
+  "icons": [{"src":"/icons/logi-barcode.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
 }
