@@ -1,4 +1,4 @@
-const CACHE="logi-barcode-2-1";
+const CACHE="logi-barcode-2-3";
 const APP_SHELL=["/","/manifest.webmanifest","/icons/logi-barcode.svg"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(APP_SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
