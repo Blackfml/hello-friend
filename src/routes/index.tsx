@@ -80,20 +80,19 @@ function formatDate(value: string) {
 }
 
 function barcodeValue(product: Product, field: "produto" | "lote" | "validade" | "quantidade" | "empresa" | "nome") {
-  const productKey = product.code.trim();
   switch (field) {
     case "produto":
-      return `PRODUTO|${productKey}`;
+      return product.code.trim();
     case "lote":
-      return `LOTE|${productKey}|${product.lot}`;
+      return product.lot.trim();
     case "validade":
-      return `VALIDADE|${productKey}|${product.expiry}`;
+      return formatDate(product.expiry);
     case "quantidade":
-      return `QTD|${productKey}|${product.quantity}`;
+      return String(product.quantity);
     case "empresa":
-      return `EMPRESA|${productKey}|${product.company}`;
+      return product.company;
     case "nome":
-      return `NOME|${productKey}|${product.name}`;
+      return product.name.trim();
   }
 }
 
