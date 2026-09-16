@@ -8,7 +8,6 @@ import {
   Check,
   ClipboardList,
   Edit3,
-  FileText,
   LayoutDashboard,
   Menu,
   Package,
@@ -78,6 +77,132 @@ function formatDate(value: string) {
   return d && m && y ? `${d}/${m}/${y}` : value;
 }
 
+function buildBarcodeSvg(value: string) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  JsBarcode(svg, value, {
+    format: "CODE128",
+    width: 2,
+    height: 58,
+    displayValue: true,
+    fontSize: 12,
+    margin: 5,
+    background: "#ffffff",
+    lineColor: "#101828",
+  });
+  return svg.outerHTML;
+}
+
+function printProductLabels(product: Product) {
+  const printWindow = window.open("", "_blank", "width=900,height=1200");
+  if (!printWindow) {
+    throw new Error("Não foi possível abrir a janela de impressão. Verifique o bloqueador de pop-ups.");
+  }
+
+  const labels = [
+    ["CÓDIGO DO PRODUTO", product.code],
+    ["NOME DO PRODUTO", product.name],
+    ["LOTE", product.lot],
+    ["VALIDADE", formatDate(product.expiry)],
+    ["QUANTIDADE", String(product.quantity)],
+    ["EMPRESA", product.company],
+  ] as const;
+
+  const labelsHtml = labels
+    .map(
+      ([label, value]) => `
+        <section class="label">
+          <div class="label-title">${label}</div>
+          <div class="barcode">${buildBarcodeSvg(value)}</div>
+          <div class="value">${value}</div>
+        </section>`,
+    )
+    .join("");
+
+  printWindow.document.open();
+  printWindow.document.write(`<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Etiquetas — ${product.name}</title>
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; width: 210mm; min-height: 297mm; background: #fff; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #172238; }
+  .sheet {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 9mm;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: 22mm repeat(3, 1fr);
+    gap: 5mm;
+    background: #fff;
+  }
+  .header {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid #d6dbe2;
+    padding: 2mm 0 4mm;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .brand { font-size: 15pt; font-weight: 800; letter-spacing: .05em; }
+  .subtitle { margin-top: 1mm; color: #697586; font-size: 6pt; font-weight: 700; letter-spacing: .12em; }
+  .meta { max-width: 90mm; text-align: right; font-size: 7pt; color: #667085; }
+  .label {
+    min-width: 0;
+    border: 1px solid #cfd5dc;
+    border-radius: 2mm;
+    padding: 4mm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    overflow: hidden;
+    background: #fff;
+  }
+  .label-title { width: 100%; margin-bottom: 2mm; font-size: 7pt; font-weight: 900; letter-spacing: .08em; }
+  .barcode { width: 100%; display: flex; justify-content: center; }
+  .barcode svg { display: block; width: 100%; max-width: 82mm; height: auto; }
+  .value { margin-top: 1mm; max-width: 100%; overflow-wrap: anywhere; font-family: Consolas, monospace; font-size: 7pt; color: #475467; }
+  @media print {
+    html, body { width: 210mm; min-height: 297mm; }
+    .sheet { width: 210mm; min-height: 297mm; }
+  }
+</style>
+</head>
+<body>
+  <main class="sheet">
+    <header class="header">
+      <div>
+        <div class="brand">LOGI BARCODE</div>
+        <div class="subtitle">ETIQUETAS DE MOVIMENTAÇÃO · CODE 128</div>
+      </div>
+      <div class="meta">${product.company} · ${product.name}</div>
+    </header>
+    ${labelsHtml}
+  </main>
+<script>
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      window.focus();
+      window.print();
+    }, 250);
+  });
+  window.addEventListener('afterprint', function () {
+    setTimeout(function () { window.close(); }, 150);
+  });
+</script>
+</body>
+</html>`);
+  printWindow.document.close();
+}
+
 function Index() {
   const [products, setProducts] = useState<Product[]>(() => {
     try {
@@ -91,23 +216,11 @@ function Index() {
   const [company, setCompany] = useState<Company | "Todas">("Todas");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
-  const [selected, setSelected] = useState<Product | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [form, setForm] = useState({ company: "Pharma" as Company, name: "", code: "", expiry: "", lot: "", quantity: "1" });
 
   useEffect(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(products)), [products]);
-
-  useEffect(() => {
-    if (!selected) return;
-    const timer = window.setTimeout(() => window.print(), 350);
-    const cleanup = () => setSelected(null);
-    window.addEventListener("afterprint", cleanup, { once: true });
-    return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener("afterprint", cleanup);
-    };
-  }, [selected]);
 
   useEffect(() => {
     if (!notice) return;
@@ -171,8 +284,13 @@ function Index() {
   };
 
   const printLabels = (product: Product) => {
-    setSelected(product);
-    setNotice("Preparando etiquetas para impressão…");
+    try {
+      printProductLabels(product);
+      setNotice("Folha A4 preparada com 6 códigos Code 128.");
+    } catch (error) {
+      console.error(error);
+      setNotice("Não foi possível abrir a impressão. Permita pop-ups para este site e tente novamente.");
+    }
   };
 
   return (
@@ -236,10 +354,6 @@ function Index() {
         </div><div className="form-note"><CalendarDays size={16} /> Validade na etiqueta: <strong>{form.expiry ? formatDate(form.expiry) : "DD/MM/AAAA"}</strong></div>
         <div className="modal-actions"><button type="button" className="secondary-btn" onClick={() => setShowForm(false)}>Cancelar</button><button type="submit" className="primary-btn"><Check size={16} /> {editing ? "Salvar alterações" : "Cadastrar produto"}</button></div></form>
       </div></div>}
-
-      {selected && <div className="print-area"><div className="print-sheet"><div className="print-header"><div><strong>LOGI BARCODE</strong><small>ETIQUETAS DE MOVIMENTAÇÃO</small></div><span>{selected.company} · {selected.name}</span></div>{[
-        ["CÓDIGO DO PRODUTO", selected.code], ["NOME DO PRODUTO", selected.name], ["LOTE", selected.lot], ["VALIDADE", formatDate(selected.expiry)], ["QUANTIDADE", String(selected.quantity)], ["EMPRESA", selected.company],
-      ].map(([label, value]) => <div className="print-label" key={label}><div className="print-title">{label}</div><Barcode value={value} /></div>)}</div></div>}
     </div>
   );
 }
