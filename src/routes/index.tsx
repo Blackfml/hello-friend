@@ -19,7 +19,7 @@ import {
   Truck,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 export const Route = createFileRoute("/")({ component: Index });
 
@@ -51,6 +51,7 @@ const seed: Product[] = [
 
 function Barcode({ value, compact = false }: { value: string; compact?: boolean }) {
   const ref = useRef<SVGSVGElement>(null);
+
   useEffect(() => {
     if (!ref.current || !value) return;
     try {
@@ -68,6 +69,7 @@ function Barcode({ value, compact = false }: { value: string; compact?: boolean 
       if (ref.current) ref.current.innerHTML = "";
     }
   }, [value, compact]);
+
   return <svg ref={ref} className="barcode-svg" aria-label={`Código de barras ${value}`} />;
 }
 
@@ -77,130 +79,33 @@ function formatDate(value: string) {
   return d && m && y ? `${d}/${m}/${y}` : value;
 }
 
-function buildBarcodeSvg(value: string) {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  JsBarcode(svg, value, {
-    format: "CODE128",
-    width: 2,
-    height: 58,
-    displayValue: true,
-    fontSize: 12,
-    margin: 5,
-    background: "#ffffff",
-    lineColor: "#101828",
-  });
-  return svg.outerHTML;
-}
+function PrintSheet({ product }: { product: Product }) {
+  return (
+    <div className="print-layer" aria-hidden="true">
+      <div className="print-sheet">
+        <header className="print-header">
+          <div>
+            <div className="print-brand">LOGI BARCODE</div>
+            <div className="print-subtitle">ETIQUETAS DE MOVIMENTAÇÃO · CODE 128</div>
+          </div>
+          <div className="print-meta">{product.company} · {product.name}</div>
+        </header>
 
-function printProductLabels(product: Product) {
-  const printWindow = window.open("", "_blank", "width=900,height=1200");
-  if (!printWindow) {
-    throw new Error("Não foi possível abrir a janela de impressão. Verifique o bloqueador de pop-ups.");
-  }
-
-  const labels = [
-    ["CÓDIGO DO PRODUTO", product.code],
-    ["NOME DO PRODUTO", product.name],
-    ["LOTE", product.lot],
-    ["VALIDADE", formatDate(product.expiry)],
-    ["QUANTIDADE", String(product.quantity)],
-    ["EMPRESA", product.company],
-  ] as const;
-
-  const labelsHtml = labels
-    .map(
-      ([label, value]) => `
-        <section class="label">
-          <div class="label-title">${label}</div>
-          <div class="barcode">${buildBarcodeSvg(value)}</div>
-          <div class="value">${value}</div>
-        </section>`,
-    )
-    .join("");
-
-  printWindow.document.open();
-  printWindow.document.write(`<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Etiquetas — ${product.name}</title>
-<style>
-  @page { size: A4 portrait; margin: 0; }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; width: 210mm; min-height: 297mm; background: #fff; }
-  body { font-family: Arial, Helvetica, sans-serif; color: #172238; }
-  .sheet {
-    width: 210mm;
-    min-height: 297mm;
-    padding: 9mm;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: 22mm repeat(3, 1fr);
-    gap: 5mm;
-    background: #fff;
-  }
-  .header {
-    grid-column: 1 / -1;
-    border-bottom: 1px solid #d6dbe2;
-    padding: 2mm 0 4mm;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-  }
-  .brand { font-size: 15pt; font-weight: 800; letter-spacing: .05em; }
-  .subtitle { margin-top: 1mm; color: #697586; font-size: 6pt; font-weight: 700; letter-spacing: .12em; }
-  .meta { max-width: 90mm; text-align: right; font-size: 7pt; color: #667085; }
-  .label {
-    min-width: 0;
-    border: 1px solid #cfd5dc;
-    border-radius: 2mm;
-    padding: 4mm;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    break-inside: avoid;
-    page-break-inside: avoid;
-    overflow: hidden;
-    background: #fff;
-  }
-  .label-title { width: 100%; margin-bottom: 2mm; font-size: 7pt; font-weight: 900; letter-spacing: .08em; }
-  .barcode { width: 100%; display: flex; justify-content: center; }
-  .barcode svg { display: block; width: 100%; max-width: 82mm; height: auto; }
-  .value { margin-top: 1mm; max-width: 100%; overflow-wrap: anywhere; font-family: Consolas, monospace; font-size: 7pt; color: #475467; }
-  @media print {
-    html, body { width: 210mm; min-height: 297mm; }
-    .sheet { width: 210mm; min-height: 297mm; }
-  }
-</style>
-</head>
-<body>
-  <main class="sheet">
-    <header class="header">
-      <div>
-        <div class="brand">LOGI BARCODE</div>
-        <div class="subtitle">ETIQUETAS DE MOVIMENTAÇÃO · CODE 128</div>
+        {Array.from({ length: 6 }, (_, index) => (
+          <section className="print-label" key={`${product.id}-${index}`}>
+            <div className="print-label-title">ETIQUETA DE PRODUTO</div>
+            <Barcode value={product.code} />
+            <div className="print-product-name">{product.name}</div>
+            <div className="print-details">
+              <span>Lote: <strong>{product.lot}</strong></span>
+              <span>Validade: <strong>{formatDate(product.expiry)}</strong></span>
+              <span>Qtd.: <strong>{product.quantity}</strong></span>
+            </div>
+          </section>
+        ))}
       </div>
-      <div class="meta">${product.company} · ${product.name}</div>
-    </header>
-    ${labelsHtml}
-  </main>
-<script>
-  window.addEventListener('load', function () {
-    setTimeout(function () {
-      window.focus();
-      window.print();
-    }, 250);
-  });
-  window.addEventListener('afterprint', function () {
-    setTimeout(function () { window.close(); }, 150);
-  });
-</script>
-</body>
-</html>`);
-  printWindow.document.close();
+    </div>
+  );
 }
 
 function Index() {
@@ -218,15 +123,52 @@ function Index() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [form, setForm] = useState({ company: "Pharma" as Company, name: "", code: "", expiry: "", lot: "", quantity: "1" });
+  const [printingProduct, setPrintingProduct] = useState<Product | null>(null);
+  const [form, setForm] = useState({
+    company: "Pharma" as Company,
+    name: "",
+    code: "",
+    expiry: "",
+    lot: "",
+    quantity: "1",
+  });
 
-  useEffect(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(products)), [products]);
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+  }, [products]);
 
   useEffect(() => {
     if (!notice) return;
     const timer = window.setTimeout(() => setNotice(null), 2800);
     return () => window.clearTimeout(timer);
   }, [notice]);
+
+  useEffect(() => {
+    if (!printingProduct) return;
+
+    let printed = false;
+    const startPrint = window.setTimeout(() => {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          printed = true;
+          window.print();
+        });
+      });
+    }, 450);
+
+    const finishPrint = () => {
+      if (printed) {
+        setPrintingProduct(null);
+        setNotice("Etiqueta A4 pronta para impressão.");
+      }
+    };
+
+    window.addEventListener("afterprint", finishPrint);
+    return () => {
+      window.clearTimeout(startPrint);
+      window.removeEventListener("afterprint", finishPrint);
+    };
+  }, [printingProduct]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -252,16 +194,24 @@ function Index() {
 
   const openEdit = (p: Product) => {
     setEditing(p);
-    setForm({ company: p.company, name: p.name, code: p.code, expiry: p.expiry, lot: p.lot, quantity: String(p.quantity) });
+    setForm({
+      company: p.company,
+      name: p.name,
+      code: p.code,
+      expiry: p.expiry,
+      lot: p.lot,
+      quantity: String(p.quantity),
+    });
     setShowForm(true);
   };
 
-  const save = (event: React.FormEvent) => {
+  const save = (event: FormEvent) => {
     event.preventDefault();
     if (!form.name.trim() || !form.code.trim() || !form.expiry || !form.lot.trim()) {
       setNotice("Preencha nome, código, validade e lote.");
       return;
     }
+
     const data: Product = {
       id: editing?.id ?? crypto.randomUUID(),
       company: form.company,
@@ -272,6 +222,7 @@ function Index() {
       quantity: Math.max(0, Number(form.quantity) || 0),
       createdAt: editing?.createdAt ?? new Date().toISOString(),
     };
+
     setProducts((current) => editing ? current.map((p) => p.id === editing.id ? data : p) : [data, ...current]);
     setShowForm(false);
     setNotice(editing ? "Produto atualizado com sucesso." : "Produto cadastrado com sucesso.");
@@ -284,24 +235,20 @@ function Index() {
   };
 
   const printLabels = (product: Product) => {
-    try {
-      printProductLabels(product);
-      setNotice("Folha A4 preparada com 6 códigos Code 128.");
-    } catch (error) {
-      console.error(error);
-      setNotice("Não foi possível abrir a impressão. Permita pop-ups para este site e tente novamente.");
-    }
+    setShowForm(false);
+    setPrintingProduct(product);
   };
 
   return (
     <div className="logi-app">
       <button className="mobile-menu" onClick={() => setMenuOpen((v) => !v)} aria-label="Abrir menu"><Menu size={20} /></button>
+
       <aside className={`sidebar ${menuOpen ? "open" : ""}`}>
         <div className="brand"><div className="brand-mark"><Boxes size={21} /></div><div><strong>LOGI</strong><span>BARCODE 2.0</span></div></div>
         <div className="side-section">OPERAÇÃO</div>
         <button className="side-link active" onClick={() => setMenuOpen(false)}><LayoutDashboard size={18} /> Dashboard</button>
         <button className="side-link" onClick={openCreate}><Plus size={18} /> Novo cadastro</button>
-        <button className="side-link" onClick={() => setNotice("As etiquetas podem ser impressas pelo botão de impressora em cada produto.")}><ClipboardList size={18} /> Etiquetas</button>
+        <button className="side-link" onClick={() => setNotice("Use o botão de impressora em qualquer produto para gerar a folha A4.")}><ClipboardList size={18} /> Etiquetas</button>
         <button className="side-link" onClick={() => setNotice(`Estoque cadastrado: ${totalQty.toLocaleString("pt-BR")} unidades.`)}><Archive size={18} /> Estoque</button>
         <div className="side-section">GESTÃO</div>
         <button className="side-link" onClick={() => setNotice(`${products.length} produtos cadastrados · ${expiring} próximos do vencimento.`)}><BarChart3 size={18} /> Relatórios</button>
@@ -329,14 +276,19 @@ function Index() {
         <section className="panel">
           <div className="panel-head"><div><div className="section-label">INVENTÁRIO</div><h3>Produtos cadastrados</h3><p>Controle de produto, lote, validade e quantidade.</p></div><div className="searchbox"><Search size={17} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar produto, código ou lote…" /></div></div>
           <div className="filters">{(["Todas", "Pharma", "Aspen", "Viatris"] as const).map((item) => <button key={item} className={`filter ${company === item ? "active" : ""}`} onClick={() => setCompany(item)}>{item}</button>)}</div>
-          <div className="table-wrap"><table><thead><tr><th>Produto</th><th>Empresa</th><th>Código</th><th>Lote</th><th>Validade</th><th>Qtd.</th><th>Ações</th></tr></thead><tbody>
-            {filtered.map((p) => <tr key={p.id}>
-              <td><div className="product-cell"><div className="product-icon"><Package size={16} /></div><div><strong>{p.name}</strong><small>ID {p.id.slice(0, 8).toUpperCase()}</small></div></div></td>
-              <td><span className={`company ${p.company.toLowerCase()}`}>{p.company}</span></td><td className="mono">{p.code}</td><td className="mono">{p.lot}</td><td>{formatDate(p.expiry)}</td><td><strong>{p.quantity.toLocaleString("pt-BR")}</strong></td>
-              <td><div className="row-actions"><button title="Editar" onClick={() => openEdit(p)}><Edit3 size={15} /></button><button title="Imprimir etiquetas" onClick={() => printLabels(p)} className="print-action"><Printer size={15} /></button><button title="Excluir" className="danger" onClick={() => remove(p.id)}><Trash2 size={15} /></button></div></td>
-            </tr>)}
-          </tbody></table>{!filtered.length && <div className="empty"><Package size={30} /><strong>Nenhum produto encontrado</strong><span>Tente outro termo ou cadastre um novo produto.</span><button className="secondary-btn" onClick={openCreate}><Plus size={15} /> Cadastrar produto</button></div>}</div>
+          <div className="table-wrap"><table><thead><tr><th>Produto</th><th>Empresa</th><th>Código</th><th>Lote</th><th>Validade</th><th>Qtd.</th><th>Ações</th></tr></thead>
+            <tbody>{filtered.length ? filtered.map((p) => <tr key={p.id}>
+              <td><div className="product-cell"><div className="product-icon"><Package size={16} /></div><div><strong>{p.name}</strong><small>Cadastro local</small></div></div></td>
+              <td><span className="company-pill">{p.company}</span></td>
+              <td><code>{p.code}</code></td>
+              <td><code>{p.lot}</code></td>
+              <td>{formatDate(p.expiry)}</td>
+              <td><strong>{p.quantity.toLocaleString("pt-BR")}</strong></td>
+              <td><div className="row-actions"><button title="Imprimir etiquetas" onClick={() => printLabels(p)} className="print-action"><Printer size={15} /></button><button title="Editar" onClick={() => openEdit(p)} className="icon-btn"><Edit3 size={15} /></button><button title="Excluir" onClick={() => remove(p.id)} className="icon-btn danger"><Trash2 size={15} /></button></div></td>
+            </tr>) : <tr><td colSpan={7} className="empty-state">Nenhum produto encontrado.</td></tr>}</tbody>
+          </table></div>
         </section>
+
         <footer className="footer"><span>LOGI BARCODE 2.0</span><span><Check size={13} /> Code 128 · A4 · Dados locais</span></footer>
       </main>
 
@@ -354,6 +306,31 @@ function Index() {
         </div><div className="form-note"><CalendarDays size={16} /> Validade na etiqueta: <strong>{form.expiry ? formatDate(form.expiry) : "DD/MM/AAAA"}</strong></div>
         <div className="modal-actions"><button type="button" className="secondary-btn" onClick={() => setShowForm(false)}>Cancelar</button><button type="submit" className="primary-btn"><Check size={16} /> {editing ? "Salvar alterações" : "Cadastrar produto"}</button></div></form>
       </div></div>}
+
+      {printingProduct && <PrintSheet product={printingProduct} />}
+
+      <style>{`
+        .print-layer { display:none; }
+        @media print {
+          @page { size: A4 portrait; margin: 0; }
+          html, body { width: 210mm !important; min-height: 297mm !important; background: #fff !important; }
+          body { margin: 0 !important; }
+          body * { visibility: hidden !important; }
+          .print-layer, .print-layer * { visibility: visible !important; }
+          .print-layer { display:block !important; position:absolute !important; inset:0 !important; width:210mm !important; min-height:297mm !important; background:#fff !important; }
+          .print-sheet { width:210mm; height:297mm; padding:9mm; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:22mm repeat(3, 1fr); gap:5mm; background:#fff; box-sizing:border-box; color:#172238; font-family:Arial,Helvetica,sans-serif; }
+          .print-header { grid-column:1 / -1; border-bottom:1px solid #d6dbe2; padding:2mm 0 4mm; display:flex; align-items:flex-end; justify-content:space-between; }
+          .print-brand { font-size:15pt; font-weight:800; letter-spacing:.05em; }
+          .print-subtitle { margin-top:1mm; color:#697586; font-size:6pt; font-weight:700; letter-spacing:.12em; }
+          .print-meta { max-width:90mm; text-align:right; font-size:7pt; color:#667085; }
+          .print-label { min-width:0; border:1px solid #cfd5dc; border-radius:2mm; padding:4mm; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; overflow:hidden; background:#fff; box-sizing:border-box; }
+          .print-label-title { width:100%; margin-bottom:2mm; font-size:7pt; font-weight:900; letter-spacing:.08em; }
+          .print-label .barcode-svg { display:block; width:100%; max-width:82mm; height:auto; }
+          .print-product-name { margin-top:1mm; max-width:100%; overflow-wrap:anywhere; font-size:8pt; font-weight:800; }
+          .print-details { margin-top:2mm; width:100%; display:flex; justify-content:center; gap:4mm; flex-wrap:wrap; font-size:6.5pt; color:#475467; }
+          .print-details strong { color:#172238; }
+        }
+      `}</style>
     </div>
   );
 }
