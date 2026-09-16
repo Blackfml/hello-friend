@@ -79,7 +79,34 @@ function formatDate(value: string) {
   return d && m && y ? `${d}/${m}/${y}` : value;
 }
 
+function barcodeValue(product: Product, field: "produto" | "lote" | "validade" | "quantidade" | "empresa" | "nome") {
+  const productKey = product.code.trim();
+  switch (field) {
+    case "produto":
+      return `PRODUTO|${productKey}`;
+    case "lote":
+      return `LOTE|${productKey}|${product.lot}`;
+    case "validade":
+      return `VALIDADE|${productKey}|${product.expiry}`;
+    case "quantidade":
+      return `QTD|${productKey}|${product.quantity}`;
+    case "empresa":
+      return `EMPRESA|${productKey}|${product.company}`;
+    case "nome":
+      return `NOME|${productKey}|${product.name}`;
+  }
+}
+
 function PrintSheet({ product }: { product: Product }) {
+  const fields = [
+    { key: "produto", title: "CÓDIGO DO PRODUTO", value: product.code },
+    { key: "lote", title: "LOTE", value: product.lot },
+    { key: "validade", title: "VALIDADE", value: formatDate(product.expiry) },
+    { key: "quantidade", title: "QUANTIDADE", value: String(product.quantity) },
+    { key: "empresa", title: "EMPRESA", value: product.company },
+    { key: "nome", title: "NOME DO PRODUTO", value: product.name },
+  ] as const;
+
   return (
     <div className="print-layer" aria-hidden="true">
       <div className="print-sheet">
@@ -88,19 +115,15 @@ function PrintSheet({ product }: { product: Product }) {
             <div className="print-brand">LOGI BARCODE</div>
             <div className="print-subtitle">ETIQUETAS DE MOVIMENTAÇÃO · CODE 128</div>
           </div>
-          <div className="print-meta">{product.company} · {product.name}</div>
+          <div className="print-meta">Produto: {product.code}</div>
         </header>
 
-        {Array.from({ length: 6 }, (_, index) => (
-          <section className="print-label" key={`${product.id}-${index}`}>
-            <div className="print-label-title">ETIQUETA DE PRODUTO</div>
-            <Barcode value={product.code} />
-            <div className="print-product-name">{product.name}</div>
-            <div className="print-details">
-              <span>Lote: <strong>{product.lot}</strong></span>
-              <span>Validade: <strong>{formatDate(product.expiry)}</strong></span>
-              <span>Qtd.: <strong>{product.quantity}</strong></span>
-            </div>
+        {fields.map((field) => (
+          <section className="print-label" key={`${product.id}-${field.key}`}>
+            <div className="print-label-title">{field.title}</div>
+            <Barcode value={barcodeValue(product, field.key)} />
+            <div className="print-value">{field.value}</div>
+            <div className="print-encoded">{barcodeValue(product, field.key)}</div>
           </section>
         ))}
       </div>
@@ -159,7 +182,7 @@ function Index() {
     const finishPrint = () => {
       if (printed) {
         setPrintingProduct(null);
-        setNotice("Etiqueta A4 pronta para impressão.");
+        setNotice("Etiquetas A4 prontas para impressão.");
       }
     };
 
@@ -212,11 +235,18 @@ function Index() {
       return;
     }
 
+    const normalizedCode = form.code.trim();
+    const duplicatedCode = products.some((p) => p.code.trim() === normalizedCode && p.id !== editing?.id);
+    if (duplicatedCode) {
+      setNotice("Este código de produto já está cadastrado. Use um código diferente para cada produto.");
+      return;
+    }
+
     const data: Product = {
       id: editing?.id ?? crypto.randomUUID(),
       company: form.company,
       name: form.name.trim(),
-      code: form.code.trim(),
+      code: normalizedCode,
       expiry: form.expiry,
       lot: form.lot.trim(),
       quantity: Math.max(0, Number(form.quantity) || 0),
@@ -318,17 +348,16 @@ function Index() {
           body * { visibility: hidden !important; }
           .print-layer, .print-layer * { visibility: visible !important; }
           .print-layer { display:block !important; position:absolute !important; inset:0 !important; width:210mm !important; min-height:297mm !important; background:#fff !important; }
-          .print-sheet { width:210mm; height:297mm; padding:9mm; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:22mm repeat(3, 1fr); gap:5mm; background:#fff; box-sizing:border-box; color:#172238; font-family:Arial,Helvetica,sans-serif; }
-          .print-header { grid-column:1 / -1; border-bottom:1px solid #d6dbe2; padding:2mm 0 4mm; display:flex; align-items:flex-end; justify-content:space-between; }
-          .print-brand { font-size:15pt; font-weight:800; letter-spacing:.05em; }
-          .print-subtitle { margin-top:1mm; color:#697586; font-size:6pt; font-weight:700; letter-spacing:.12em; }
-          .print-meta { max-width:90mm; text-align:right; font-size:7pt; color:#667085; }
-          .print-label { min-width:0; border:1px solid #cfd5dc; border-radius:2mm; padding:4mm; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; overflow:hidden; background:#fff; box-sizing:border-box; }
-          .print-label-title { width:100%; margin-bottom:2mm; font-size:7pt; font-weight:900; letter-spacing:.08em; }
+          .print-sheet { width:210mm; height:297mm; padding:8mm; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:18mm repeat(3, 1fr); gap:4mm; background:#fff; box-sizing:border-box; color:#172238; font-family:Arial,Helvetica,sans-serif; }
+          .print-header { grid-column:1 / -1; border-bottom:1px solid #d6dbe2; padding:1mm 0 3mm; display:flex; align-items:flex-end; justify-content:space-between; }
+          .print-brand { font-size:14pt; font-weight:800; letter-spacing:.05em; }
+          .print-subtitle { margin-top:1mm; color:#697586; font-size:5.5pt; font-weight:700; letter-spacing:.1em; }
+          .print-meta { max-width:80mm; text-align:right; font-size:7pt; color:#667085; }
+          .print-label { min-width:0; border:1px solid #cfd5dc; border-radius:2mm; padding:3mm; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; overflow:hidden; background:#fff; box-sizing:border-box; }
+          .print-label-title { width:100%; margin-bottom:1.5mm; font-size:7pt; font-weight:900; letter-spacing:.07em; }
           .print-label .barcode-svg { display:block; width:100%; max-width:82mm; height:auto; }
-          .print-product-name { margin-top:1mm; max-width:100%; overflow-wrap:anywhere; font-size:8pt; font-weight:800; }
-          .print-details { margin-top:2mm; width:100%; display:flex; justify-content:center; gap:4mm; flex-wrap:wrap; font-size:6.5pt; color:#475467; }
-          .print-details strong { color:#172238; }
+          .print-value { margin-top:1mm; max-width:100%; overflow-wrap:anywhere; font-size:8pt; font-weight:800; }
+          .print-encoded { margin-top:1mm; max-width:100%; overflow-wrap:anywhere; font-family:Consolas,monospace; font-size:5.5pt; color:#667085; }
         }
       `}</style>
     </div>
