@@ -5,7 +5,7 @@ type Lot={lot:string;expiry:string;quantity:string};
 type Product={id:string;nf:string;name:string;code:string;lot:string;expiry:string;quantity:number};
 const KEY="logi-barcode-products";
 export const Route=createFileRoute("/logi-v24")({component:LogiV24});
-function LogiV24(){
+export default function LogiV24(){
  const [nf,setNf]=useState(""); const [name,setName]=useState(""); const [code,setCode]=useState("");
  const [lots,setLots]=useState<Lot[]>([{lot:"",expiry:"",quantity:"1"}]); const [msg,setMsg]=useState("");
  const add=()=>setLots(v=>[...v,{lot:"",expiry:"",quantity:"1"}]);
