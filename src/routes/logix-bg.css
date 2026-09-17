@@ -1,0 +1,12 @@
+/* LogiX — visual background layer */
+:root{background:#eef4fb}
+html,body{background:#eef4fb!important}
+body{background-image:radial-gradient(circle at 12% 8%,rgba(45,126,246,.12),transparent 30%),radial-gradient(circle at 88% 18%,rgba(23,105,223,.09),transparent 28%),linear-gradient(135deg,#f8fbff 0%,#eef4fb 48%,#e8f1fa 100%)!important;background-attachment:fixed}
+.logi-app{position:relative;isolation:isolate;min-height:100vh;background:transparent!important}
+.logi-app:before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;background-image:linear-gradient(rgba(23,105,223,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(23,105,223,.035) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),transparent 82%)}
+.logi-app:after{content:"";position:fixed;width:520px;height:520px;right:-220px;top:80px;z-index:-1;pointer-events:none;border-radius:50%;background:radial-gradient(circle,rgba(46,128,246,.10) 0%,rgba(46,128,246,.045) 34%,transparent 70%);filter:blur(4px)}
+.main{position:relative}
+.panel,.stat{box-shadow:0 8px 28px rgba(24,55,92,.055)!important}
+.hero{box-shadow:0 18px 42px rgba(20,48,83,.16)!important}
+@media(max-width:820px){body{background-attachment:scroll!important}.logi-app:before{background-size:34px 34px}.logi-app:after{width:360px;height:360px;right:-180px;top:120px}}
+@media print{html,body{background:#fff!important}.logi-app:before,.logi-app:after{display:none!important}}
