@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import LogiBarcode from "./logi-v23";
+import LogiBarcode from "./logi-v24";
 
 function Home(){
   return <>
