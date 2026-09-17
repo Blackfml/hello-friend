@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import JsBarcode from "jsbarcode";
 import { ArrowLeft, Plus, Printer, Trash2, X } from "lucide-react";
 import "./logi-v22.css";
@@ -9,13 +10,56 @@ type LotLine={id:string;company:Company;name:string;code:string;lot:string;expir
 type Batch={id:string;nf:string;createdAt:string;lines:LotLine[]};
 const KEY="logi-barcode-nf-batches";
 
-function Barcode({value}:{value:string}){const ref=useRef<SVGSVGElement>(null);useEffect(()=>{if(!ref.current)return;ref.current.innerHTML="";try{JsBarcode(ref.current,value,{format:"CODE128",width:2,height:62,displayValue:true,fontSize:12,margin:8,background:"#fff",lineColor:"#000",textMargin:5})}catch{}},[value]);return <svg ref={ref} style={{width:"100%",height:"auto",display:"block"}}/>}
-function PrintBatch({batch}:{batch:Batch}){return <div className="nf-print-layer"><div className="nf-print-sheet"><header><div><strong>LOGI BARCODE</strong><span>ETIQUETAS DE MOVIMENTAÇÃO · CODE 128</span></div><b>NF {batch.nf}</b></header><div className="nf-print-grid">{batch.lines.map(l=><section className="nf-print-label" key={l.id}><div className="nf-print-title">{l.name}</div><div className="nf-print-meta">NF {batch.nf} · Lote {l.lot}</div><div className="nf-print-info"><b>LOTE: {l.lot}</b><b>QTD: {l.quantity}</b><b>VAL: {formatDate(l.expiry)}</b></div><div className="nf-bar"><small>CÓDIGO DO PRODUTO</small><Barcode value={l.code}/></div><div className="nf-bar"><small>LOTE</small><Barcode value={l.lot}/></div><div className="nf-bar"><small>VALIDADE</small><Barcode value={l.expiry.split("-").reverse().join("")}/></div><div className="nf-bar"><small>QUANTIDADE</small><Barcode value={String(l.quantity)}/></div></section>)}</div></div></div>}
+function Barcode({value}:{value:string}){
+ const ref=useRef<SVGSVGElement>(null);
+ useEffect(()=>{
+  if(!ref.current||!value)return;
+  ref.current.innerHTML="";
+  try{JsBarcode(ref.current,value,{format:"CODE128",width:2,height:62,displayValue:true,fontSize:12,margin:8,background:"#fff",lineColor:"#000",textMargin:5});}
+  catch{}
+ },[value]);
+ return <svg ref={ref} style={{width:"100%",height:"auto",display:"block"}}/>;
+}
+
+function PrintBatch({batch}:{batch:Batch}){
+ const content=<div className="nf-print-layer" aria-hidden="true">
+  <div className="nf-print-sheet">
+   <header><div><strong>LOGI BARCODE</strong><span>ETIQUETAS DE MOVIMENTAÇÃO · CODE 128</span></div><b>NF {batch.nf}</b></header>
+   <div className="nf-print-grid">
+    {batch.lines.map(l=><section className="nf-print-label" key={l.id}>
+     <div className="nf-print-title">{l.name}</div>
+     <div className="nf-print-meta">NF {batch.nf} · Lote {l.lot}</div>
+     <div className="nf-print-info"><b>LOTE: {l.lot}</b><b>QTD: {l.quantity}</b><b>VAL: {formatDate(l.expiry)}</b></div>
+     <div className="nf-bar"><small>CÓDIGO DO PRODUTO</small><Barcode value={l.code}/></div>
+     <div className="nf-bar"><small>LOTE</small><Barcode value={l.lot}/></div>
+     <div className="nf-bar"><small>VALIDADE</small><Barcode value={l.expiry.split("-").reverse().join("")}/></div>
+     <div className="nf-bar"><small>QUANTIDADE</small><Barcode value={String(l.quantity)}/></div>
+    </section>)}
+   </div>
+  </div>
+ </div>;
+ return typeof document!=="undefined"?createPortal(content,document.body):null;
+}
+
 function formatDate(v:string){if(!v)return "—";const[a,b,c]=v.split("-");return c&&b&&a?`${c}/${b}/${a}`:v}
+
 function NfLotes(){
- const[batches,setBatches]=useState<Batch[]>(()=>{try{return JSON.parse(localStorage.getItem(KEY)||"[]")}catch{return[]}});const[nf,setNf]=useState("");const[lines,setLines]=useState<LotLine[]>([]);const[printing,setPrinting]=useState<Batch|null>(null);const[notice,setNotice]=useState("");const[line,setLine]=useState({company:"Pharma" as Company,name:"",code:"",lot:"",expiry:"",quantity:"1"});
+ const[batches,setBatches]=useState<Batch[]>(()=>{try{return JSON.parse(localStorage.getItem(KEY)||"[]")}catch{return[]}});
+ const[nf,setNf]=useState("");
+ const[lines,setLines]=useState<LotLine[]>([]);
+ const[printing,setPrinting]=useState<Batch|null>(null);
+ const[notice,setNotice]=useState("");
+ const[line,setLine]=useState({company:"Pharma" as Company,name:"",code:"",lot:"",expiry:"",quantity:"1"});
  useEffect(()=>localStorage.setItem(KEY,JSON.stringify(batches)),[batches]);
- useEffect(()=>{if(!printing)return;const t=setTimeout(()=>window.print(),400);const done=()=>setPrinting(null);addEventListener("afterprint",done);return()=>{clearTimeout(t);removeEventListener("afterprint",done)}},[printing]);
+ useEffect(()=>{
+  if(!printing)return;
+  let cancelled=false;
+  const print=()=>{if(!cancelled)window.print()};
+  const t=window.setTimeout(print,650);
+  const done=()=>setPrinting(null);
+  window.addEventListener("afterprint",done);
+  return()=>{cancelled=true;window.clearTimeout(t);window.removeEventListener("afterprint",done)};
+ },[printing]);
  const addLine=()=>{const name=line.name.trim(),code=line.code.trim(),lot=line.lot.trim(),qty=Math.max(0,Math.floor(Number(line.quantity)));if(!nf.trim()||!name||!code||!lot||!line.expiry||qty<1){setNotice("Informe NF, produto, código, lote, validade e quantidade.");return}if(lines.some(x=>x.code.toLowerCase()===code.toLowerCase()&&x.lot.toLowerCase()===lot.toLowerCase())){setNotice("Este produto já está com este lote nesta NF.");return}setLines(x=>[...x,{id:crypto.randomUUID(),company:line.company,name,code,lot,expiry:line.expiry,quantity:qty}]);setLine({...line,name:"",code:"",lot:"",expiry:"",quantity:"1"});setNotice("Lote adicionado à NF.")};
  const saveBatch=()=>{if(!nf.trim()||!lines.length){setNotice("Informe o número da NF e adicione pelo menos um lote.");return}const batch:Batch={id:crypto.randomUUID(),nf:nf.trim(),createdAt:new Date().toISOString(),lines};setBatches(x=>[batch,...x]);setLines([]);setNf("");setNotice(`NF ${batch.nf} salva com ${batch.lines.length} lote(s).`)};
  return <div className="nf-page"><div className="nf-top"><button className="secondary-btn" onClick={()=>window.location.href="/"}><ArrowLeft size={16}/> Voltar</button><div><div className="eyebrow">ENTRADA FISCAL · MULTI-LOTE</div><h1>NF com vários lotes</h1><p>Cadastre vários lotes da mesma nota e imprima todos juntos na mesma folha A4.</p></div></div>
@@ -25,6 +69,7 @@ function NfLotes(){
  <div className="nf-actions"><strong>{lines.length} lote(s) nesta NF</strong><div><button className="secondary-btn" onClick={()=>{setLines([]);setNf("")}}>Limpar</button><button className="primary-btn" onClick={saveBatch} disabled={!nf.trim()||!lines.length}><Plus size={16}/> Salvar NF</button></div></div></section>
  <section className="panel"><div className="panel-head"><div><div className="section-label">NOTAS SALVAS</div><h3>Impressão por NF</h3><p>Cada NF mantém seus lotes agrupados para impressão.</p></div></div><div className="nf-batches">{batches.map(b=><div className="nf-batch" key={b.id}><div><strong>NF {b.nf}</strong><span>{b.lines.length} lote(s) · {b.lines.reduce((s,x)=>s+x.quantity,0)} unidades</span><small>{b.lines.map(x=>x.lot).join(" · ")}</small></div><div className="nf-batch-actions"><button className="secondary-btn" onClick={()=>setPrinting(b)}><Printer size={15}/> Imprimir A4</button><button className="icon-btn" onClick={()=>setBatches(x=>x.filter(y=>y.id!==b.id))}><X size={16}/></button></div></div>)}{!batches.length&&<div className="empty-state">Nenhuma NF multi-lote salva.</div>}</div></section>
  {printing&&<PrintBatch batch={printing}/>} {notice&&<div className="toast">{notice}</div>}
- <style>{` .nf-page{min-height:100vh;background:#f4f7fb;padding:28px;box-sizing:border-box;color:#13233a}.nf-top{max-width:1250px;margin:0 auto 22px;display:flex;gap:18px;align-items:flex-start}.nf-top h1{margin:4px 0;font-size:30px}.nf-top p{margin:0;color:#68778d}.nf-builder{max-width:1250px;margin:0 auto 18px}.nf-builder-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.nf-builder-head label{width:240px}.nf-builder label,.nf-line-form label{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:#526278}.nf-builder input,.nf-builder select{height:42px;border:1px solid #d7e0ea;border-radius:9px;padding:0 11px;background:#fff;box-sizing:border-box}.nf-line-form{display:grid;grid-template-columns:1fr 1.5fr 1.5fr 1fr 1fr .8fr auto;gap:10px;margin-top:20px;align-items:end}.nf-line-form button{height:42px;white-space:nowrap}.nf-lines{margin-top:18px;border:1px solid #e0e7ef;border-radius:12px;overflow:hidden}.nf-line{display:grid;grid-template-columns:34px 1.7fr 1fr 1fr .7fr 38px;gap:10px;align-items:center;padding:13px;border-bottom:1px solid #edf1f5;background:#fff}.nf-line:last-child{border-bottom:0}.nf-line strong,.nf-line span{display:block}.nf-line span{font-size:10px;color:#7a8798;margin-top:3px}.nf-line code{font-size:11px}.nf-line button{border:0;background:#fff0f1;color:#c43849;border-radius:7px;width:32px;height:32px}.nf-index{font-weight:900;color:#1769df}.nf-actions{display:flex;justify-content:space-between;align-items:center;margin-top:18px}.nf-actions div{display:flex;gap:8px}.nf-batches{display:grid;gap:10px}.nf-batch{display:flex;justify-content:space-between;gap:15px;align-items:center;border:1px solid #e0e7ef;border-radius:12px;padding:15px;background:#fff}.nf-batch>div:first-child{display:grid;gap:4px}.nf-batch span,.nf-batch small{color:#718097;font-size:11px}.nf-batch-actions{display:flex;gap:8px;align-items:center}.nf-print-layer{display:none}.nf-print-sheet{background:#fff}.nf-print-grid{display:grid;grid-template-columns:1fr 1fr;gap:7mm}.nf-print-label{border:1px solid #111;padding:7mm;break-inside:avoid}.nf-print-title{font-size:16pt;font-weight:900}.nf-print-meta{font-size:9pt;margin:2mm 0 3mm}.nf-print-info{display:flex;justify-content:space-between;font-size:10pt;margin-bottom:3mm}.nf-bar{margin-top:2mm}.nf-bar small{font-size:7pt;font-weight:900}.nf-bar svg{max-height:22mm}.nf-print-sheet header{display:flex;justify-content:space-between;border-bottom:1px solid #111;padding-bottom:5mm;margin-bottom:6mm}.nf-print-sheet header strong{display:block;font-size:15pt}.nf-print-sheet header span{font-size:8pt}.nf-print-sheet header b{font-size:12pt}@media(max-width:900px){.nf-page{padding:16px}.nf-top{flex-direction:column}.nf-builder-head{flex-direction:column}.nf-builder-head label{width:100%}.nf-line-form{grid-template-columns:1fr 1fr}.nf-line-form button{grid-column:1/-1}.nf-line{grid-template-columns:30px 1fr 1fr;gap:7px}.nf-line>span,.nf-line>b{font-size:10px}.nf-line>button{grid-column:3;justify-self:end}.nf-actions,.nf-batch{flex-direction:column;align-items:stretch}.nf-actions div,.nf-batch-actions{width:100%}.nf-batch-actions button:first-child{flex:1}}@media print{body>*:not(#root){display:none!important}.nf-page{display:none!important}.nf-print-layer{display:block!important;position:static!important}.nf-print-sheet{width:190mm;min-height:277mm;margin:0 auto;padding:8mm;box-sizing:border-box}.nf-print-grid{grid-template-columns:1fr 1fr;gap:5mm}.nf-print-label{padding:4mm}.nf-bar svg{max-height:17mm}@page{size:A4 portrait;margin:0}}`}</style></div>
+ <style>{` .nf-page{min-height:100vh;background:#f4f7fb;padding:28px;box-sizing:border-box;color:#13233a}.nf-top{max-width:1250px;margin:0 auto 22px;display:flex;gap:18px;align-items:flex-start}.nf-top h1{margin:4px 0;font-size:30px}.nf-top p{margin:0;color:#68778d}.nf-builder{max-width:1250px;margin:0 auto 18px}.nf-builder-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.nf-builder-head label{width:240px}.nf-builder label,.nf-line-form label{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:#526278}.nf-builder input,.nf-builder select{height:42px;border:1px solid #d7e0ea;border-radius:9px;padding:0 11px;background:#fff;box-sizing:border-box}.nf-line-form{display:grid;grid-template-columns:1fr 1.5fr 1.5fr 1fr 1fr .8fr auto;gap:10px;margin-top:20px;align-items:end}.nf-line-form button{height:42px;white-space:nowrap}.nf-lines{margin-top:18px;border:1px solid #e0e7ef;border-radius:12px;overflow:hidden}.nf-line{display:grid;grid-template-columns:34px 1.7fr 1fr 1fr .7fr 38px;gap:10px;align-items:center;padding:13px;border-bottom:1px solid #edf1f5;background:#fff}.nf-line:last-child{border-bottom:0}.nf-line strong,.nf-line span{display:block}.nf-line span{font-size:10px;color:#7a8798;margin-top:3px}.nf-line code{font-size:11px}.nf-line button{border:0;background:#fff0f1;color:#c43849;border-radius:7px;width:32px;height:32px}.nf-index{font-weight:900;color:#1769df}.nf-actions{display:flex;justify-content:space-between;align-items:center;margin-top:18px}.nf-actions div{display:flex;gap:8px}.nf-batches{display:grid;gap:10px}.nf-batch{display:flex;justify-content:space-between;gap:15px;align-items:center;border:1px solid #e0e7ef;border-radius:12px;padding:15px;background:#fff}.nf-batch>div:first-child{display:grid;gap:4px}.nf-batch span,.nf-batch small{color:#718097;font-size:11px}.nf-batch-actions{display:flex;gap:8px;align-items:center}.nf-print-layer{display:none}.nf-print-sheet{background:#fff}.nf-print-grid{display:grid;grid-template-columns:1fr 1fr;gap:7mm}.nf-print-label{border:1px solid #111;padding:7mm;break-inside:avoid}.nf-print-title{font-size:16pt;font-weight:900}.nf-print-meta{font-size:9pt;margin:2mm 0 3mm}.nf-print-info{display:flex;justify-content:space-between;font-size:10pt;margin-bottom:3mm}.nf-bar{margin-top:2mm}.nf-bar small{font-size:7pt;font-weight:900}.nf-bar svg{max-height:22mm}.nf-print-sheet header{display:flex;justify-content:space-between;border-bottom:1px solid #111;padding-bottom:5mm;margin-bottom:6mm}.nf-print-sheet header strong{display:block;font-size:15pt}.nf-print-sheet header span{font-size:8pt}.nf-print-sheet header b{font-size:12pt}@media(max-width:900px){.nf-page{padding:16px}.nf-top{flex-direction:column}.nf-builder-head{flex-direction:column}.nf-builder-head label{width:100%}.nf-line-form{grid-template-columns:1fr 1fr}.nf-line-form button{grid-column:1/-1}.nf-line{grid-template-columns:30px 1fr 1fr;gap:7px}.nf-line>span,.nf-line>b{font-size:10px}.nf-line>button{grid-column:3;justify-self:end}.nf-actions,.nf-batch{flex-direction:column;align-items:stretch}.nf-actions div,.nf-batch-actions{width:100%}.nf-batch-actions button:first-child{flex:1}}@media print{html,body{background:#fff!important;margin:0!important;padding:0!important}.nf-page{display:none!important}.nf-print-layer{display:block!important;position:static!important;visibility:visible!important}.nf-print-sheet{width:190mm;min-height:277mm;margin:0 auto;padding:8mm;box-sizing:border-box;background:#fff;color:#000}.nf-print-grid{grid-template-columns:1fr 1fr;gap:5mm}.nf-print-label{padding:4mm}.nf-bar svg{max-height:17mm;visibility:visible!important}.nf-print-layer,.nf-print-layer *{visibility:visible!important}@page{size:A4 portrait;margin:0}}`}</style></div>
 }
+
 export const Route=createFileRoute("/nf-lotes")({component:NfLotes});
