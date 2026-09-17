@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import LogiBarcode from "./logi-v23";
+import "./logix-theme.css";
 import { PackagePlus } from "lucide-react";
 
 function Home(){
