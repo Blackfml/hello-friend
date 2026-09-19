@@ -1,0 +1,64 @@
+import JsBarcode from "jsbarcode";
+import { Boxes, Check, Printer, Search, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import "./batch-print.css";
+
+type Product = { id:string; company:string; name:string; code:string; expiry:string; lot:string; quantity:number };
+const KEY="logi-barcode-products";
+const fmt=(v:string)=>{const[a,b,c]=(v||"").split("-");return c&&b&&a?c+"/"+b+"/"+a:v||"—"};
+
+function Barcode({value}:{value:string}){
+  const ref=(el:SVGSVGElement|null)=>{if(!el)return;el.innerHTML="";try{JsBarcode(el,value,{format:"CODE128",width:1.5,height:48,displayValue:true,fontSize:9,margin:3,background:"#fff",lineColor:"#101828"})}catch{}};
+  return <svg ref={ref} className="batch-barcode"/>;
+}
+
+export default function BatchPrint(){
+  const [open,setOpen]=useState(false);
+  const [products,setProducts]=useState<Product[]>([]);
+  const [selected,setSelected]=useState<string[]>([]);
+  const [q,setQ]=useState("");
+  const [copies,setCopies]=useState<Record<string,number>>({});
+  const [printing,setPrinting]=useState(false);
+
+  const load=()=>{try{const raw=localStorage.getItem(KEY);const list=raw?JSON.parse(raw):[];setProducts(Array.isArray(list)?list:[])}catch{setProducts([])}};
+  useEffect(()=>{if(open)load()},[open]);
+  const filtered=useMemo(()=>{const x=q.trim().toLowerCase();return products.filter(p=>!x||[p.name,p.code,p.lot,p.company,p.expiry,String(p.quantity)].some(v=>String(v).toLowerCase().includes(x)))},[products,q]);
+  const toggle=(id:string)=>setSelected(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id]);
+  const selectedProducts=products.filter(p=>selected.includes(p.id));
+  const setCopy=(id:string,n:number)=>setCopies(c=>({...c,[id]:Math.min(20,Math.max(1,n||1))}));
+  const doPrint=()=>{if(!selectedProducts.length)return;setPrinting(true);setTimeout(()=>window.print(),350)};
+  useEffect(()=>{const done=()=>setPrinting(false);addEventListener("afterprint",done);return()=>removeEventListener("afterprint",done)},[]);
+
+  return <>
+    <button className="batch-print-fab" onClick={()=>setOpen(true)} aria-label="Montar folha A4 com vários produtos"><Boxes size={17}/><span>Folha A4</span></button>
+    {open&&!printing&&<div className="batch-backdrop" onMouseDown={()=>setOpen(false)}>
+      <div className="batch-modal" onMouseDown={e=>e.stopPropagation()}>
+        <div className="batch-head"><div><div className="batch-kicker">LOGIX · IMPRESSÃO EM LOTE</div><h2>Montar folha A4</h2><p>Selecione produtos e lotes diferentes para imprimir em uma única folha.</p></div><button className="batch-close" onClick={()=>setOpen(false)}><X size={18}/></button></div>
+        <div className="batch-toolbar"><div className="batch-search"><Search size={16}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar produto, código ou lote…"/></div><span>{selectedProducts.length} selecionado{selectedProducts.length===1?"":"s"}</span></div>
+        <div className="batch-list">
+          {filtered.map(p=>{const checked=selected.includes(p.id);return <div className={"batch-row "+(checked?"selected":"")} key={p.id} onClick={()=>toggle(p.id)}>
+            <div className={"batch-check "+(checked?"on":"")}>{checked&&<Check size={14}/>}</div>
+            <div className="batch-info"><strong>{p.name}</strong><span>Código {p.code} · Lote {p.lot}</span><small>Validade {fmt(p.expiry)} · Estoque {p.quantity}</small></div>
+            <label className="batch-copies" onClick={e=>e.stopPropagation()}>Cópias <input type="number" min="1" max="20" value={copies[p.id]||1} onChange={e=>setCopy(p.id,Number(e.target.value))}/></label>
+          </div>})}
+          {!filtered.length&&<div className="batch-empty">Nenhum produto cadastrado.</div>}
+        </div>
+        <div className="batch-summary"><Boxes size={16}/><div><strong>{selectedProducts.length} itens</strong><span>Uma folha A4 · produtos e lotes podem ser diferentes</span></div></div>
+        <div className="batch-actions"><button className="secondary-btn" onClick={()=>setOpen(false)}>Cancelar</button><button className="primary-btn" disabled={!selectedProducts.length} onClick={doPrint}><Printer size={16}/> Gerar folha A4</button></div>
+      </div>
+    </div>}
+    {printing&&<div className="batch-print-layer">
+      <div className="batch-print-sheet">
+        <header className="batch-print-header"><div><div className="batch-print-brand">LOGIX</div><div className="batch-print-subtitle">FOLHA DE LOTES · CODE 128</div></div><div className="batch-print-count">{selectedProducts.length} itens</div></header>
+        <div className="batch-print-grid">
+          {selectedProducts.flatMap(p=>Array.from({length:copies[p.id]||1},(_,i)=><section className="batch-print-card" key={p.id+"-"+i}>
+            <div className="batch-print-title">{p.name}</div>
+            <div className="batch-print-meta"><span><b>CÓDIGO</b>{p.code}</span><span><b>LOTE</b>{p.lot}</span><span><b>VALIDADE</b>{fmt(p.expiry)}</span><span><b>QUANTIDADE</b>{p.quantity}</span></div>
+            <Barcode value={p.lot}/>
+            <div className="batch-print-code">{p.lot}</div>
+          </section>))}
+        </div>
+      </div>
+    </div>}
+  </>;
+}
