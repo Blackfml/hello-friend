@@ -43,12 +43,7 @@ export default function BatchPrint({inline=false,onRegisterLot}:{inline?:boolean
 
   const printLayer=printing&&typeof document!=="undefined"?createPortal(
     <div className="batch-print-layer" aria-hidden="true">
-      <div className="batch-print-sheet">
-        <header className="batch-print-header">
-          <div><div className="batch-print-brand">LOGIX</div><div className="batch-print-subtitle">FOLHA DE LOTES · CODE 128</div></div>
-          <div className="batch-print-count">{selectedProducts.length} itens</div>
-        </header>
-        <div className="batch-print-pages">
+      <div className="batch-print-pages">
           {Array.from({length:Math.ceil(selectedProducts.reduce((n,p)=>n+(copies[p.id]||1),0)/4)},(_,page)=>{
             const items=selectedProducts.flatMap(p=>Array.from({length:copies[p.id]||1},(_,i)=>({p,i}))).slice(page*4,page*4+4);
             return <div className="batch-print-sheet" key={page}>
@@ -66,7 +61,6 @@ export default function BatchPrint({inline=false,onRegisterLot}:{inline?:boolean
               </div>
             </div>;
           })}
-        </div>
       </div>
     </div>,document.body):null;
 
