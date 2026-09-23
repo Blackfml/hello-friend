@@ -9,7 +9,7 @@ const KEY="logi-barcode-products";
 const fmt=(v:string)=>{const[a,b,c]=(v||"").split("-");return c&&b&&a?c+"/"+b+"/"+a:v||"—"};
 
 function Barcode({value}:{value:string}){
-  const ref=(el:SVGSVGElement|null)=>{if(!el)return;el.innerHTML="";try{JsBarcode(el,value,{format:"CODE128",width:1.5,height:48,displayValue:true,fontSize:9,margin:3,background:"#fff",lineColor:"#101828"})}catch{}};
+  const ref=(el:SVGSVGElement|null)=>{if(!el)return;el.innerHTML="";try{JsBarcode(el,value,{format:"CODE128",width:1,height:30,displayValue:true,fontSize:7,margin:1,background:"#fff",lineColor:"#101828"})}catch{}};
   return <svg ref={ref} className="batch-barcode"/>;
 }
 
