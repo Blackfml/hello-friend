@@ -1,13 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import LogiBarcode from "./logi-v23";
-import BatchPrint from "./batch-print";
 import "./logix-theme.css";
 import { PackagePlus } from "lucide-react";
 
 function Home(){
   return <div style={{position:"relative"}}>
     <LogiBarcode/>
-    <BatchPrint/>
     <button
       className="secondary-btn"
       onClick={()=>window.location.href="/nf-lotes"}
