@@ -59,8 +59,10 @@ export default function BatchPrint(){
       </div>
     </div>,document.body):null;
 
+  const fab=typeof document!=="undefined"?createPortal(<button type="button" className="batch-print-fab" onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.preventDefault();e.stopPropagation();setOpen(true)}} aria-label="Montar folha A4 com vários produtos"><Boxes size={19}/><span>Folha A4</span></button>,document.body):null;
+
   return <>
-    <button className="batch-print-fab" onClick={()=>setOpen(true)} aria-label="Montar folha A4 com vários produtos"><Boxes size={17}/><span>Folha A4</span></button>
+    {fab}
     {open&&<div className="batch-backdrop" onMouseDown={()=>setOpen(false)}>
       <div className="batch-modal" onMouseDown={e=>e.stopPropagation()}>
         <div className="batch-head"><div><div className="batch-kicker">LOGIX · IMPRESSÃO EM LOTE</div><h2>Montar folha A4</h2><p>Selecione produtos e lotes diferentes para imprimir em uma única folha.</p></div><button className="batch-close" onClick={()=>setOpen(false)}><X size={18}/></button></div>
