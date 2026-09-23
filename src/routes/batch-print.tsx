@@ -48,13 +48,24 @@ export default function BatchPrint({inline=false,onRegisterLot}:{inline?:boolean
           <div><div className="batch-print-brand">LOGIX</div><div className="batch-print-subtitle">FOLHA DE LOTES · CODE 128</div></div>
           <div className="batch-print-count">{selectedProducts.length} itens</div>
         </header>
-        <div className="batch-print-grid">
-          {selectedProducts.flatMap(p=>Array.from({length:copies[p.id]||1},(_,i)=><section className="batch-print-card" key={p.id+"-"+i}>
-            <div className="batch-print-title">{p.name}</div>
-            <div className="batch-print-meta"><span><b>CÓDIGO</b>{p.code}</span><span><b>LOTE</b>{p.lot}</span><span><b>VALIDADE</b>{fmt(p.expiry)}</span><span><b>QUANTIDADE</b>{p.quantity}</span></div>
-            <Barcode value={p.lot}/>
-            <div className="batch-print-code">{p.lot}</div>
-          </section>))}
+        <div className="batch-print-pages">
+          {Array.from({length:Math.ceil(selectedProducts.reduce((n,p)=>n+(copies[p.id]||1),0)/4)},(_,page)=>{
+            const items=selectedProducts.flatMap(p=>Array.from({length:copies[p.id]||1},(_,i)=>({p,i}))).slice(page*4,page*4+4);
+            return <div className="batch-print-sheet" key={page}>
+              <header className="batch-print-header">
+                <div><div className="batch-print-brand">LOGIX</div><div className="batch-print-subtitle">FOLHA DE LOTES · CODE 128 · 4 LOTES POR A4</div></div>
+                <div className="batch-print-count">{items.length} lotes</div>
+              </header>
+              <div className="batch-print-grid">
+                {items.map(({p,i})=><section className="batch-print-card" key={p.id+"-"+i}>
+                  <div className="batch-print-title">{p.name}</div>
+                  <div className="batch-print-meta"><span><b>CÓDIGO DO PRODUTO</b>{p.code}</span><span><b>LOTE</b>{p.lot}</span><span><b>DATA DE VENCIMENTO</b>{fmt(p.expiry)}</span><span><b>QUANTIDADE</b>{p.quantity}</span></div>
+                  <Barcode value={p.lot}/>
+                  <div className="batch-print-code">{p.lot}</div>
+                </section>)}
+              </div>
+            </div>;
+          })}
         </div>
       </div>
     </div>,document.body):null;
