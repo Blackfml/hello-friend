@@ -81,7 +81,7 @@ export default function BatchPrint({inline=false,onRegisterLot}:{inline?:boolean
           </div>})}
           {!filtered.length&&<div className="batch-empty">Nenhum produto cadastrado.</div>}
         </div>
-        <div className="batch-summary"><div className="batch-summary-icon"><Boxes size={17}/></div><div><strong>{selectedProducts.length} lotes selecionados</strong><span>Você pode misturar produtos, códigos, validades e quantidades.</span></div><div className="batch-summary-badge">A4</div></div>
+        <div className="batch-summary"><div className="batch-summary-icon"><Boxes size={17}/></div><div><strong>{selectedProducts.length} lote{selectedProducts.length===1?"":"s"} selecionado{selectedProducts.length===1?"":"s"}</strong><span>Cada lote selecionado imprime código, lote, validade e quantidade, cada um com seu próprio Code 128.</span></div><div className="batch-summary-badge">4/A4</div></div>
         <div className="batch-actions"><button className="secondary-btn" onClick={()=>setOpen(false)}>Cancelar</button><button className="primary-btn" disabled={!selectedProducts.length} onClick={doPrint}><Printer size={16}/> Gerar folha A4</button></div>
       </div>
     </div>}
