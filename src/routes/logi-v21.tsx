@@ -3,7 +3,7 @@ import JsBarcode from "jsbarcode";
 import { Archive, BarChart3, Boxes, CalendarDays, Check, ClipboardList, Edit3, LayoutDashboard, Menu, Package, Plus, Printer, Search, Settings, Trash2, Truck, X, AlertTriangle, Download, Eye, Wifi } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
-export const Route = createFileRoute("/")({ component: LogiBarcode });
+export const Route = createFileRoute("/logi-v21")({ component: LogiBarcode });
 type Company="Pharma"|"Aspen"|"Viatris"; type Product={id:string;company:Company;name:string;code:string;expiry:string;lot:string;quantity:number;createdAt:string};
 type Section="dashboard"|"produtos"|"etiquetas"|"estoque"|"relatorios"|"config";
 const KEY="logi-barcode-products";
