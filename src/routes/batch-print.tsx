@@ -70,7 +70,7 @@ export default function BatchPrint({inline=false,onRegisterLot}:{inline?:boolean
     {fab}
     {open&&<div className="batch-backdrop" onMouseDown={()=>setOpen(false)}>
       <div className="batch-modal" onMouseDown={e=>e.stopPropagation()}>
-        <div className="batch-head"><div><div className="batch-kicker">LOGIX · ETIQUETAS EM LOTE</div><h2>Folha A4 com vários lotes</h2><p>Selecione exatamente os lotes já cadastrados que devem sair nesta folha.</p></div><div className="batch-head-actions">{onRegisterLot&&<button type="button" className="batch-register" onClick={()=>{setOpen(false);onRegisterLot()}}><Plus size={15}/> Cadastrar lote</button>}<button type="button" className="batch-close" onClick={()=>setOpen(false)}><X size={18}/></button></div>
+        <div className="batch-head"><div><div className="batch-kicker">LOGIX · ETIQUETAS EM LOTE</div><h2>Folha A4 com vários lotes</h2><p>Selecione exatamente os lotes já cadastrados que devem sair nesta folha.</p></div><div className="batch-head-actions">{onRegisterLot&&<button type="button" className="batch-register" onClick={()=>{setOpen(false);onRegisterLot()}}><Plus size={15}/> Cadastrar lote</button>}<button type="button" className="batch-close" onClick={()=>setOpen(false)}><X size={18}/></button></div></div>
         <div className="batch-toolbar"><div className="batch-search"><Search size={16}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar produto, código ou lote…"/></div><span>{selectedProducts.length} selecionado{selectedProducts.length===1?"":"s"}</span></div>
         <div className="batch-list">
           {filtered.map(p=>{const checked=selected.includes(p.id);return <div className={"batch-row "+(checked?"selected":"")} key={p.id} onClick={()=>toggle(p.id)}>
