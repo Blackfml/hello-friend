@@ -1,5 +1,6 @@
 import JsBarcode from "jsbarcode";
 import { Boxes, Check, Printer, Search, X } from "lucide-react";
+import { createPortal } from "react-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./batch-print.css";
 
@@ -26,12 +27,41 @@ export default function BatchPrint(){
   const toggle=(id:string)=>setSelected(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id]);
   const selectedProducts=products.filter(p=>selected.includes(p.id));
   const setCopy=(id:string,n:number)=>setCopies(c=>({...c,[id]:Math.min(20,Math.max(1,n||1))}));
-  const doPrint=()=>{if(!selectedProducts.length)return;setPrinting(true);setTimeout(()=>window.print(),350)};
-  useEffect(()=>{const done=()=>setPrinting(false);addEventListener("afterprint",done);return()=>removeEventListener("afterprint",done)},[]);
+
+  const doPrint=()=>{
+    if(!selectedProducts.length)return;
+    setOpen(false);
+    setPrinting(true);
+    window.setTimeout(()=>window.print(),600);
+  };
+
+  useEffect(()=>{
+    const done=()=>{setPrinting(false);setOpen(false)};
+    addEventListener("afterprint",done);
+    return()=>removeEventListener("afterprint",done);
+  },[]);
+
+  const printLayer=printing&&typeof document!=="undefined"?createPortal(
+    <div className="batch-print-layer" aria-hidden="true">
+      <div className="batch-print-sheet">
+        <header className="batch-print-header">
+          <div><div className="batch-print-brand">LOGIX</div><div className="batch-print-subtitle">FOLHA DE LOTES · CODE 128</div></div>
+          <div className="batch-print-count">{selectedProducts.length} itens</div>
+        </header>
+        <div className="batch-print-grid">
+          {selectedProducts.flatMap(p=>Array.from({length:copies[p.id]||1},(_,i)=><section className="batch-print-card" key={p.id+"-"+i}>
+            <div className="batch-print-title">{p.name}</div>
+            <div className="batch-print-meta"><span><b>CÓDIGO</b>{p.code}</span><span><b>LOTE</b>{p.lot}</span><span><b>VALIDADE</b>{fmt(p.expiry)}</span><span><b>QUANTIDADE</b>{p.quantity}</span></div>
+            <Barcode value={p.lot}/>
+            <div className="batch-print-code">{p.lot}</div>
+          </section>))}
+        </div>
+      </div>
+    </div>,document.body):null;
 
   return <>
     <button className="batch-print-fab" onClick={()=>setOpen(true)} aria-label="Montar folha A4 com vários produtos"><Boxes size={17}/><span>Folha A4</span></button>
-    {open&&!printing&&<div className="batch-backdrop" onMouseDown={()=>setOpen(false)}>
+    {open&&<div className="batch-backdrop" onMouseDown={()=>setOpen(false)}>
       <div className="batch-modal" onMouseDown={e=>e.stopPropagation()}>
         <div className="batch-head"><div><div className="batch-kicker">LOGIX · IMPRESSÃO EM LOTE</div><h2>Montar folha A4</h2><p>Selecione produtos e lotes diferentes para imprimir em uma única folha.</p></div><button className="batch-close" onClick={()=>setOpen(false)}><X size={18}/></button></div>
         <div className="batch-toolbar"><div className="batch-search"><Search size={16}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar produto, código ou lote…"/></div><span>{selectedProducts.length} selecionado{selectedProducts.length===1?"":"s"}</span></div>
@@ -47,18 +77,6 @@ export default function BatchPrint(){
         <div className="batch-actions"><button className="secondary-btn" onClick={()=>setOpen(false)}>Cancelar</button><button className="primary-btn" disabled={!selectedProducts.length} onClick={doPrint}><Printer size={16}/> Gerar folha A4</button></div>
       </div>
     </div>}
-    {printing&&<div className="batch-print-layer">
-      <div className="batch-print-sheet">
-        <header className="batch-print-header"><div><div className="batch-print-brand">LOGIX</div><div className="batch-print-subtitle">FOLHA DE LOTES · CODE 128</div></div><div className="batch-print-count">{selectedProducts.length} itens</div></header>
-        <div className="batch-print-grid">
-          {selectedProducts.flatMap(p=>Array.from({length:copies[p.id]||1},(_,i)=><section className="batch-print-card" key={p.id+"-"+i}>
-            <div className="batch-print-title">{p.name}</div>
-            <div className="batch-print-meta"><span><b>CÓDIGO</b>{p.code}</span><span><b>LOTE</b>{p.lot}</span><span><b>VALIDADE</b>{fmt(p.expiry)}</span><span><b>QUANTIDADE</b>{p.quantity}</span></div>
-            <Barcode value={p.lot}/>
-            <div className="batch-print-code">{p.lot}</div>
-          </section>))}
-        </div>
-      </div>
-    </div>}
+    {printLayer}
   </>;
 }
