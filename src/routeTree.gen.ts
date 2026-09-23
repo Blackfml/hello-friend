@@ -10,33 +10,128 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LogiV21RouteImport } from './routes/logi-v21'
+import { Route as LogiV22RouteImport } from './routes/logi-v22'
+import { Route as LogiV23RouteImport } from './routes/logi-v23'
+import { Route as LogiV24RouteImport } from './routes/logi-v24'
+import { Route as NfLotesRouteImport } from './routes/nf-lotes'
+import { Route as TesteLeituraRouteImport } from './routes/teste-leitura'
+import { Route as TesteTelaRouteImport } from './routes/teste-tela'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LogiV21Route = LogiV21RouteImport.update({
+  id: '/logi-v21',
+  path: '/logi-v21',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LogiV22Route = LogiV22RouteImport.update({
+  id: '/logi-v22',
+  path: '/logi-v22',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LogiV23Route = LogiV23RouteImport.update({
+  id: '/logi-v23',
+  path: '/logi-v23',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LogiV24Route = LogiV24RouteImport.update({
+  id: '/logi-v24',
+  path: '/logi-v24',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NfLotesRoute = NfLotesRouteImport.update({
+  id: '/nf-lotes',
+  path: '/nf-lotes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TesteLeituraRoute = TesteLeituraRouteImport.update({
+  id: '/teste-leitura',
+  path: '/teste-leitura',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TesteTelaRoute = TesteTelaRouteImport.update({
+  id: '/teste-tela',
+  path: '/teste-tela',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/logi-v21': typeof LogiV21Route
+  '/logi-v22': typeof LogiV22Route
+  '/logi-v23': typeof LogiV23Route
+  '/logi-v24': typeof LogiV24Route
+  '/nf-lotes': typeof NfLotesRoute
+  '/teste-leitura': typeof TesteLeituraRoute
+  '/teste-tela': typeof TesteTelaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/logi-v21': typeof LogiV21Route
+  '/logi-v22': typeof LogiV22Route
+  '/logi-v23': typeof LogiV23Route
+  '/logi-v24': typeof LogiV24Route
+  '/nf-lotes': typeof NfLotesRoute
+  '/teste-leitura': typeof TesteLeituraRoute
+  '/teste-tela': typeof TesteTelaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/logi-v21': typeof LogiV21Route
+  '/logi-v22': typeof LogiV22Route
+  '/logi-v23': typeof LogiV23Route
+  '/logi-v24': typeof LogiV24Route
+  '/nf-lotes': typeof NfLotesRoute
+  '/teste-leitura': typeof TesteLeituraRoute
+  '/teste-tela': typeof TesteTelaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/logi-v21'
+    | '/logi-v22'
+    | '/logi-v23'
+    | '/logi-v24'
+    | '/nf-lotes'
+    | '/teste-leitura'
+    | '/teste-tela'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/logi-v21'
+    | '/logi-v22'
+    | '/logi-v23'
+    | '/logi-v24'
+    | '/nf-lotes'
+    | '/teste-leitura'
+    | '/teste-tela'
+  id:
+    | '__root__'
+    | '/'
+    | '/logi-v21'
+    | '/logi-v22'
+    | '/logi-v23'
+    | '/logi-v24'
+    | '/nf-lotes'
+    | '/teste-leitura'
+    | '/teste-tela'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LogiV21Route: typeof LogiV21Route
+  LogiV22Route: typeof LogiV22Route
+  LogiV23Route: typeof LogiV23Route
+  LogiV24Route: typeof LogiV24Route
+  NfLotesRoute: typeof NfLotesRoute
+  TesteLeituraRoute: typeof TesteLeituraRoute
+  TesteTelaRoute: typeof TesteTelaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +143,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/logi-v21': {
+      id: '/logi-v21'
+      path: '/logi-v21'
+      fullPath: '/logi-v21'
+      preLoaderRoute: typeof LogiV21RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/logi-v22': {
+      id: '/logi-v22'
+      path: '/logi-v22'
+      fullPath: '/logi-v22'
+      preLoaderRoute: typeof LogiV22RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/logi-v23': {
+      id: '/logi-v23'
+      path: '/logi-v23'
+      fullPath: '/logi-v23'
+      preLoaderRoute: typeof LogiV23RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/logi-v24': {
+      id: '/logi-v24'
+      path: '/logi-v24'
+      fullPath: '/logi-v24'
+      preLoaderRoute: typeof LogiV24RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nf-lotes': {
+      id: '/nf-lotes'
+      path: '/nf-lotes'
+      fullPath: '/nf-lotes'
+      preLoaderRoute: typeof NfLotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teste-leitura': {
+      id: '/teste-leitura'
+      path: '/teste-leitura'
+      fullPath: '/teste-leitura'
+      preLoaderRoute: typeof TesteLeituraRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teste-tela': {
+      id: '/teste-tela'
+      path: '/teste-tela'
+      fullPath: '/teste-tela'
+      preLoaderRoute: typeof TesteTelaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LogiV21Route: LogiV21Route,
+  LogiV22Route: LogiV22Route,
+  LogiV23Route: LogiV23Route,
+  LogiV24Route: LogiV24Route,
+  NfLotesRoute: NfLotesRoute,
+  TesteLeituraRoute: TesteLeituraRoute,
+  TesteTelaRoute: TesteTelaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
