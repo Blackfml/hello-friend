@@ -13,7 +13,7 @@ function Barcode({value}:{value:string}){
   return <svg ref={ref} className="batch-barcode"/>;
 }
 
-export default function BatchPrint(){
+export default function BatchPrint({inline=false}:{inline?:boolean}){
   const [open,setOpen]=useState(false);
   const [products,setProducts]=useState<Product[]>([]);
   const [selected,setSelected]=useState<string[]>([]);
@@ -59,7 +59,8 @@ export default function BatchPrint(){
       </div>
     </div>,document.body):null;
 
-  const fab=typeof document!=="undefined"?createPortal(<button type="button" className="batch-print-fab" onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.preventDefault();e.stopPropagation();setOpen(true)}} aria-label="Montar folha A4 com vários produtos"><Boxes size={19}/><span>Folha A4</span></button>,document.body):null;
+  const trigger=<button type="button" className={inline?"batch-print-inline":"batch-print-fab"} onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.preventDefault();e.stopPropagation();setOpen(true)}} aria-label="Montar folha A4 com vários produtos"><Boxes size={19}/><span>{inline?"Imprimir vários lotes · A4":"Folha A4"}</span></button>;
+  const fab=!inline&&typeof document!=="undefined"?createPortal(trigger,document.body):inline?trigger:null;
 
   return <>
     {fab}
