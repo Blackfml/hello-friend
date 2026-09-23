@@ -29,7 +29,7 @@ function TesteLeitura(){
   const [brightness,setBrightness]=useState(false);
   const [fullscreen,setFullscreen]=useState(false);
 
-  const dimensions={medio:{width:2,height:90},grande:{width:2.8,height:125},gigante:{width:3.6,height:170}}[size];
+  const dimensions={medio:{width:2,height:90},grande:{width:2.8,height:125},gigante:{width:3.6,height:170}}[size]!;
   const bg=contrast==="maximo"?"#000":contrast==="alto"?"#080b10":"#111827";
   const card=contrast==="maximo"?"#fff":contrast==="alto"?"#fff":"#f7f8fa";
 
@@ -49,7 +49,7 @@ function TesteLeitura(){
       <div className="screen-title"><div className="screen-icon"><Smartphone size={19}/></div><div><div style={{fontSize:8,letterSpacing:".14em",fontWeight:900,color:"#71839b"}}>LOGI BARCODE · LAB</div><h1>Teste de leitura na tela</h1><p>Modo otimizado para testar Code 128 no coletor</p></div></div>
       <div className="screen-actions">
         <button className="screen-btn" onClick={reset}><RotateCcw size={14}/><span className="label">Resetar</span></button>
-        <button className="screen-btn" onClick={fullscreen}>{fullscreen?<Minus size={14}/>:<Maximize2 size={14}/>}<span className="label">{fullscreen?"Sair da tela cheia":"Tela cheia"}</span></button>
+        <button className="screen-btn" onClick={()=>fullscreen?exitFullscreen():enterFullscreen()}>{fullscreen?<Minus size={14}/>:<Maximize2 size={14}/>}<span className="label">{fullscreen?"Sair da tela cheia":"Tela cheia"}</span></button>
       </div>
     </header>
 
