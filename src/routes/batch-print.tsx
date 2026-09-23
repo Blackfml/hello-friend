@@ -44,11 +44,11 @@ export default function BatchPrint({inline=false,onRegisterLot}:{inline?:boolean
   const printLayer=printing&&typeof document!=="undefined"?createPortal(
     <div className="batch-print-layer" aria-hidden="true">
       <div className="batch-print-pages">
-          {Array.from({length:Math.ceil(selectedProducts.reduce((n,p)=>n+(copies[p.id]||1),0)/4)},(_,page)=>{
-            const items=selectedProducts.flatMap(p=>Array.from({length:copies[p.id]||1},(_,i)=>({p,i}))).slice(page*4,page*4+4);
+          {Array.from({length:Math.ceil(selectedProducts.reduce((n,p)=>n+(copies[p.id]||1),0)/6)},(_,page)=>{
+            const items=selectedProducts.flatMap(p=>Array.from({length:copies[p.id]||1},(_,i)=>({p,i}))).slice(page*6,page*6+6);
             return <div className="batch-print-sheet" key={page}>
               <header className="batch-print-header">
-                <div><div className="batch-print-brand">LOGIX</div><div className="batch-print-subtitle">FOLHA DE LOTES · CODE 128 · 4 LOTES POR A4</div></div>
+                <div><div className="batch-print-brand">LOGIX</div><div className="batch-print-subtitle">FOLHA DE LOTES · CODE 128 · ATÉ 6 LOTES POR A4</div></div>
                 <div className="batch-print-count">{items.length} lotes</div>
               </header>
               <div className="batch-print-grid">
@@ -80,7 +80,7 @@ export default function BatchPrint({inline=false,onRegisterLot}:{inline?:boolean
           </div>})}
           {!filtered.length&&<div className="batch-empty">Nenhum produto cadastrado.</div>}
         </div>
-        <div className="batch-summary"><div className="batch-summary-icon"><Boxes size={17}/></div><div><strong>{selectedProducts.length} lote{selectedProducts.length===1?"":"s"} selecionado{selectedProducts.length===1?"":"s"}</strong><span>Cada lote selecionado imprime código, lote, validade e quantidade, cada um com seu próprio Code 128.</span></div><div className="batch-summary-badge">4/A4</div></div>
+        <div className="batch-summary"><div className="batch-summary-icon"><Boxes size={17}/></div><div><strong>{selectedProducts.length} lote{selectedProducts.length===1?"":"s"} selecionado{selectedProducts.length===1?"":"s"}</strong><span>Cada lote selecionado imprime código, lote, validade e quantidade, cada um com seu próprio Code 128.</span></div><div className="batch-summary-badge">6/A4</div></div>
         <div className="batch-actions"><button className="secondary-btn" onClick={()=>setOpen(false)}>Cancelar</button><button className="primary-btn" disabled={!selectedProducts.length} onClick={doPrint}><Printer size={16}/> Gerar folha A4</button></div>
       </div>
     </div>}
