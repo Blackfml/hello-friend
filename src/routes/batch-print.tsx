@@ -55,8 +55,7 @@ export default function BatchPrint({inline=false,onRegisterLot}:{inline?:boolean
                 {items.map(({p,i})=><section className="batch-print-card" key={p.id+"-"+i}>
                   <div className="batch-print-title">{p.name}</div>
                   <div className="batch-print-meta"><span><b>CÓDIGO DO PRODUTO</b>{p.code}</span><span><b>LOTE</b>{p.lot}</span><span><b>DATA DE VENCIMENTO</b>{fmt(p.expiry)}</span><span><b>QUANTIDADE</b>{p.quantity}</span></div>
-                  <Barcode value={p.lot}/>
-                  <div className="batch-print-code">{p.lot}</div>
+                  <div className="batch-print-barcode-grid"><div className="batch-print-barcode-item"><b>CÓDIGO DO PRODUTO</b><Barcode value={p.code}/></div><div className="batch-print-barcode-item"><b>LOTE</b><Barcode value={p.lot}/></div><div className="batch-print-barcode-item"><b>DATA DE VENCIMENTO</b><Barcode value={fmt(p.expiry)}/></div><div className="batch-print-barcode-item"><b>QUANTIDADE</b><Barcode value={String(p.quantity)}/></div></div>
                 </section>)}
               </div>
             </div>;
