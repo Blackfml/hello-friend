@@ -4,7 +4,7 @@ import { AlertTriangle, Archive, BarChart3, Boxes, CalendarDays, Check, Clipboar
 import { createFileRoute } from "@tanstack/react-router";
 import BatchPrint from "./batch-print";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-export const Route=createFileRoute("/")({component:LogiBarcode});
+export const Route=createFileRoute("/logi-v23")({component:LogiBarcode});
 type Company="Pharma"|"Aspen"|"Viatris";type Lot={lot:string;expiry:string;quantity:string};type Status="pending"|"completed";type Product={id:string;company:Company;name:string;code:string;expiry:string;lot:string;quantity:number;createdAt:string;status:Status};type Section="dashboard"|"produtos"|"etiquetas"|"estoque"|"operacao"|"relatorios"|"config";type Field="produto"|"lote"|"validade"|"quantidade"|"empresa"|"nome";
 const KEY="logi-barcode-products",FIELDS:Field[]=["produto","lote","validade","quantidade","empresa","nome"],NAMES:Record<Field,string>={produto:"CÓDIGO DO PRODUTO",lote:"LOTE",validade:"VALIDADE",quantidade:"QUANTIDADE",empresa:"EMPRESA",nome:"NOME DO PRODUTO"};
 const seed:Product[]=[{id:"demo-1",company:"Pharma",name:"Produto demonstrativo",code:"7891234567890",expiry:"2027-12-31",lot:"LOTE-DEMO01",quantity:120,createdAt:new Date().toISOString(),status:"pending"}];
