@@ -13,7 +13,7 @@ function Barcode({value}:{value:string}){
   return <svg ref={ref} className="batch-barcode"/>;
 }
 
-export default function BatchPrint({inline=false}:{inline?:boolean}){
+export default function BatchPrint({inline=false,onRegisterLot}:{inline?:boolean;onRegisterLot?:()=>void}){
   const [open,setOpen]=useState(false);
   const [products,setProducts]=useState<Product[]>([]);
   const [selected,setSelected]=useState<string[]>([]);
@@ -66,7 +66,7 @@ export default function BatchPrint({inline=false}:{inline?:boolean}){
     {fab}
     {open&&<div className="batch-backdrop" onMouseDown={()=>setOpen(false)}>
       <div className="batch-modal" onMouseDown={e=>e.stopPropagation()}>
-        <div className="batch-head"><div><div className="batch-kicker">LOGIX · IMPRESSÃO EM LOTE</div><h2>Montar folha A4</h2><p>Selecione produtos e lotes diferentes para imprimir em uma única folha.</p></div><button className="batch-close" onClick={()=>setOpen(false)}><X size={18}/></button></div>
+        <div className="batch-head"><div><div className="batch-kicker">LOGIX · ETIQUETAS EM LOTE</div><h2>Folha A4 com vários lotes</h2><p>Selecione exatamente os lotes já cadastrados que devem sair nesta folha.</p></div><div className="batch-head-actions">{onRegisterLot&&<button type="button" className="batch-register" onClick={()=>{setOpen(false);onRegisterLot()}}><Plus size={15}/> Cadastrar lote</button>}<button type="button" className="batch-close" onClick={()=>setOpen(false)} onClick={()=>setOpen(false)}><X size={18}/></button></div>
         <div className="batch-toolbar"><div className="batch-search"><Search size={16}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar produto, código ou lote…"/></div><span>{selectedProducts.length} selecionado{selectedProducts.length===1?"":"s"}</span></div>
         <div className="batch-list">
           {filtered.map(p=>{const checked=selected.includes(p.id);return <div className={"batch-row "+(checked?"selected":"")} key={p.id} onClick={()=>toggle(p.id)}>
@@ -76,7 +76,7 @@ export default function BatchPrint({inline=false}:{inline?:boolean}){
           </div>})}
           {!filtered.length&&<div className="batch-empty">Nenhum produto cadastrado.</div>}
         </div>
-        <div className="batch-summary"><Boxes size={16}/><div><strong>{selectedProducts.length} itens</strong><span>Uma folha A4 · produtos e lotes podem ser diferentes</span></div></div>
+        <div className="batch-summary"><div className="batch-summary-icon"><Boxes size={17}/></div><div><strong>{selectedProducts.length} lotes selecionados</strong><span>Você pode misturar produtos, códigos, validades e quantidades.</span></div><div className="batch-summary-badge">A4</div></div>
         <div className="batch-actions"><button className="secondary-btn" onClick={()=>setOpen(false)}>Cancelar</button><button className="primary-btn" disabled={!selectedProducts.length} onClick={doPrint}><Printer size={16}/> Gerar folha A4</button></div>
       </div>
     </div>}
