@@ -1,7 +1,7 @@
 import JsBarcode from "jsbarcode";
 import { Boxes, Check, Plus, Printer, Search, X } from "lucide-react";
 import { createPortal } from "react-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./batch-print.css";
 
 type Product = { id:string; company:string; name:string; code:string; expiry:string; lot:string; quantity:number };
@@ -9,7 +9,13 @@ const KEY="logi-barcode-products";
 const fmt=(v:string)=>{const[a,b,c]=(v||"").split("-");return c&&b&&a?c+"/"+b+"/"+a:v||"—"};
 
 function Barcode({value}:{value:string}){
-  const ref=(el:SVGSVGElement|null)=>{if(!el)return;el.innerHTML="";try{JsBarcode(el,value,{format:"CODE128",width:1,height:30,displayValue:true,fontSize:7,margin:1,background:"#fff",lineColor:"#101828"})}catch{}};
+  const ref=useRef<SVGSVGElement|null>(null);
+  useEffect(()=>{
+    const el=ref.current;
+    if(!el||!value)return;
+    el.innerHTML="";
+    try{JsBarcode(el,value,{format:"CODE128",width:2,height:55,displayValue:true,fontSize:9,margin:2,background:"#fff",lineColor:"#101828"})}catch{}
+  },[value]);
   return <svg ref={ref} className="batch-barcode"/>;
 }
 
@@ -44,11 +50,11 @@ export default function BatchPrint({inline=false,onRegisterLot}:{inline?:boolean
   const printLayer=printing&&typeof document!=="undefined"?createPortal(
     <div className="batch-print-layer" aria-hidden="true">
       <div className="batch-print-pages">
-          {Array.from({length:Math.ceil(selectedProducts.reduce((n,p)=>n+(copies[p.id]||1),0)/6)},(_,page)=>{
-            const items=selectedProducts.flatMap(p=>Array.from({length:copies[p.id]||1},(_,i)=>({p,i}))).slice(page*6,page*6+6);
+          {Array.from({length:Math.ceil(selectedProducts.reduce((n,p)=>n+(copies[p.id]||1),0)/4)},(_,page)=>{
+            const items=selectedProducts.flatMap(p=>Array.from({length:copies[p.id]||1},(_,i)=>({p,i}))).slice(page*4,page*4+4);
             return <div className="batch-print-sheet" key={page}>
               <header className="batch-print-header">
-                <div><div className="batch-print-brand">LOGIX</div><div className="batch-print-subtitle">FOLHA DE LOTES · CODE 128 · ATÉ 6 LOTES POR A4</div></div>
+                <div><div className="batch-print-brand">LOGIX</div><div className="batch-print-subtitle">FOLHA DE LOTES · CODE 128 · ATÉ 4 LOTES POR A4</div></div>
                 <div className="batch-print-count">{items.length} lotes</div>
               </header>
               <div className="batch-print-grid">
@@ -80,7 +86,7 @@ export default function BatchPrint({inline=false,onRegisterLot}:{inline?:boolean
           </div>})}
           {!filtered.length&&<div className="batch-empty">Nenhum produto cadastrado.</div>}
         </div>
-        <div className="batch-summary"><div className="batch-summary-icon"><Boxes size={17}/></div><div><strong>{selectedProducts.length} lote{selectedProducts.length===1?"":"s"} selecionado{selectedProducts.length===1?"":"s"}</strong><span>Cada lote selecionado imprime código, lote, validade e quantidade, cada um com seu próprio Code 128.</span></div><div className="batch-summary-badge">6/A4</div></div>
+        <div className="batch-summary"><div className="batch-summary-icon"><Boxes size={17}/></div><div><strong>{selectedProducts.length} lote{selectedProducts.length===1?"":"s"} selecionado{selectedProducts.length===1?"":"s"}</strong><span>Cada lote selecionado imprime código, lote, validade e quantidade, cada um com seu próprio Code 128.</span></div><div className="batch-summary-badge">4/A4</div></div>
         <div className="batch-actions"><button className="secondary-btn" onClick={()=>setOpen(false)}>Cancelar</button><button className="primary-btn" disabled={!selectedProducts.length} onClick={doPrint}><Printer size={16}/> Gerar folha A4</button></div>
       </div>
     </div>}
